@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>User List</h2>
+  <ul>
+    <% users.forEach(user => { %>
+      <li><%= user %></li>
+    <% }) %>
+  </ul>
+  <form action="/users" method="POST">
+    <input type="text" name="username" placeholder="Add new user" required>
+    <button type="submit">Add</button>
+  </form>
+  <a href="/">Back Home</a>
+</body>
+</html>

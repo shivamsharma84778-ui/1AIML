@@ -1,0 +1,70 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #f9f9f9;
+  color: #333;
+}
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+header {
+  text-align: center;
+  padding: 30px 10px;
+  background: #222;
+  color: white;
+  border-radius: 8px;
+}
+nav a {
+  color: #61dafb;
+  margin: 0 12px;
+  text-decoration: none;
+}
+section {
+  margin-top: 30px;
+}
+.skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.badge {
+  background: #e0e0e0;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 14px;
+}
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+.card {
+  background: white;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+input, textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  padding: 10px;
+  background: #222;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.success {
+  color: green;
+  font-weight: bold;
+}

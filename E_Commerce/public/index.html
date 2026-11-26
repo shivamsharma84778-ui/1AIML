@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Simple E-Commerce</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+    nav button { padding: 8px 14px; margin-right: 8px; cursor: pointer; }
+    .section { display: none; margin-top: 20px; }
+    .active { display: block; }
+    .box { border: 1px solid #ccc; padding: 12px; margin: 10px 0; border-radius: 5px; }
+    input, select { padding: 6px; margin: 4px; }
+  </style>
+</head>
+<body>
+  <h1>MyShop</h1>
+  <nav>
+    <button onclick="showTab('shop')">Products</button>
+    <button onclick="showTab('cart')">Cart (<span id="cartCount">0</span>)</button>
+    <button onclick="showTab('orders')">Successful Orders</button>
+    <button onclick="showTab('seller')">Seller Panel</button>
+  </nav>
+
+  <!-- Shop Section -->
+  <div id="shop" class="section active">
+    <h2>All Products</h2>
+    <div id="productList"></div>
+  </div>
+
+  <!-- Cart & Payment Section -->
+  <div id="cart" class="section">
+    <h2>Your Cart</h2>
+    <div id="cartList"></div>
+    <h3 id="cartTotal">Total: ₹0</h3>
+    <select id="paymentMethod">
+      <option value="UPI">UPI</option>
+      <option value="Card">Debit / Credit Card</option>
+      <option value="COD">Cash on Delivery</option>
+    </select>
+    <button onclick="checkout()">Pay & Place Order</button>
+  </div>
+
+  <!-- Orders Section -->
+  <div id="orders" class="section">
+    <h2>Successful Orders</h2>
+    <div id="orderList"></div>
+  </div>
+
+  <!-- Seller Master Panel -->
+  <div id="seller" class="section">
+    <h2>Seller Master Panel</h2>
+    <input type="hidden" id="editId">
+    <input type="text" id="pName" placeholder="Product Name">
+    <input type="number" id="pPrice" placeholder="Price">
+    <input type="text" id="pDesc" placeholder="Description">
+    <button onclick="saveProduct()">Save Product</button>
+    <div id="sellerList"></div>
+  </div>
+
+  <script>
+    let allProducts = [];
+    let cart = [];
+
+    function showTab(id) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      if (id === "orders") loadOrders();
+    }
+
+    async function loadProducts() {
+      let res = await fetch("/api/products");
+      allProducts = await res.json();
+
+      let shopDiv = document.getElementById("productList");
+      let sellerDiv = document.getElementById("sellerList");
+      shopDiv.innerHTML = "";
+      sellerDiv.innerHTML = "";
+
+      allProducts.forEach(p => {
+        shopDiv.innerHTML += `
+          <div class="box">
+            <h4>${p.name} - ₹${p.price}</h4>
+            <p>${p.description}</p>
+            <button onclick="addToCart(${p.id})">Add to Cart</button>
+          </div>`;
+
+        sellerDiv.innerHTML += `
+          <div class="box">
+            <strong>${p.name}</strong> (₹${p.price}) - ${p.description}
+            <button onclick="editProduct(${p.id})">Edit</button>
+          </div>`;
+      });
+    }
+
+    function addToCart(id) {
+      let prod = allProducts.find(p => p.id === id);
+      cart.push(prod);
+      updateCart();
+      alert(prod.name + " added to cart");
+    }
+
+    function updateCart() {
+      document.getElementById("cartCount").innerText = cart.length;
+      let cartDiv = document.getElementById("cartList");
+      let total = 0;
+      cartDiv.innerHTML = "";
+
+      cart.forEach((item, index) => {
+        total += item.price;
+        cartDiv.innerHTML += `<div class="box">${item.name} - ₹${item.price} 
+          <button onclick="removeCart(${index})">Remove</button></div>`;
+      });
+      document.getElementById("cartTotal").innerText = "Total: ₹" + total;
+    }
+
+    function removeCart(index) {
+      cart.splice(index, 1);
+      updateCart();
+    }
+
+    async function checkout() {
+      if (cart.length === 0) return alert("Cart is empty!");
+      let total = cart.reduce((sum, item) => sum + item.price, 0);
+      let paymentMethod = document.getElementById("paymentMethod").value;
+
+      await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart, total, paymentMethod })
+      });
+
+      cart = [];
+      updateCart();
+      alert("Payment Successful! Order placed.");
+      showTab("orders");
+    }
+
+    async function loadOrders() {
+      let res = await fetch("/api/orders");
+      let orders = await res.json();
+      let orderDiv = document.getElementById("orderList");
+      orderDiv.innerHTML = "";
+
+      orders.forEach(o => {
+        let names = o.items.map(i => i.name).join(", ");
+        orderDiv.innerHTML += `
+          <div class="box">
+            <h4>Order ID: ${o.orderId}</h4>
+            <p>Items: ${names}</p>
+            <p>Total: ₹${o.total} | Paid via: ${o.paymentMethod}</p>
+            <small>${o.date}</small>
+          </div>`;
+      });
+    }
+
+    function editProduct(id) {
+      let p = allProducts.find(item => item.id === id);
+      document.getElementById("editId").value = p.id;
+      document.getElementById("pName").value = p.name;
+      document.getElementById("pPrice").value = p.price;
+      document.getElementById("pDesc").value = p.description;
+    }
+
+    async function saveProduct() {
+      let id = document.getElementById("editId").value;
+      let body = {
+        name: document.getElementById("pName").value,
+        price: document.getElementById("pPrice").value,
+        description: document.getElementById("pDesc").value
+      };
+
+      if (id) {
+        await fetch(`/api/products/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+      } else {
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+      }
+
+      document.getElementById("editId").value = "";
+      document.getElementById("pName").value = "";
+      document.getElementById("pPrice").value = "";
+      document.getElementById("pDesc").value = "";
+      loadProducts();
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

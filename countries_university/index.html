@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>University Finder</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; }
+    input { padding: 8px; width: 65%; }
+    button { padding: 8px 15px; cursor: pointer; }
+    .uni {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Find Universities by Country</h2>
+  <input type="text" id="country" placeholder="Enter country (e.g. India)">
+  <button onclick="searchUni()">Search</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function searchUni() {
+      let country = document.getElementById("country").value.trim();
+      let resultDiv = document.getElementById("result");
+      if (!country) return;
+
+      resultDiv.innerHTML = "<p>Loading...</p>";
+
+      try {
+        let res = await fetch(`http://universities.hipolabs.com/search?country=${country}`);
+        let data = await res.json();
+
+        resultDiv.innerHTML = "";
+        if (data.length === 0) {
+          resultDiv.innerHTML = "<p>No universities found.</p>";
+          return;
+        }
+
+        data.forEach(u => {
+          let div = document.createElement("div");
+          div.className = "uni";
+          div.innerHTML = `
+            <h4>${u.name}</h4>
+            <p><strong>State:</strong> ${u["state-province"] || "Not Available"}</p>
+            <p><strong>Website:</strong> <a href="${u.web_pages[0]}" target="_blank">${u.web_pages[0]}</a></p>
+          `;
+          resultDiv.appendChild(div);
+        });
+      } catch (err) {
+        resultDiv.innerHTML = "<p>Error fetching data.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
